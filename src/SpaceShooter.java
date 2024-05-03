@@ -6,7 +6,6 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -17,9 +16,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Glow;
-import javafx.scene.text.TextAlignment;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,8 +32,6 @@ public class SpaceShooter extends Application {
     public static int numLives = 3;
 
     private int score = 0;
-
-    private boolean bossExists = false;
     
     private boolean reset = false;
 
@@ -48,13 +43,12 @@ public class SpaceShooter extends Application {
     
     private final List<GameObject> newObjects = new ArrayList<>();
 
-    private Player player = new Player(WIDTH / 2, HEIGHT - 40);
+    private Player player = new Player((double) WIDTH / 2, HEIGHT - 40);
 
     private Pane root = new Pane();
 
     private Scene scene = new Scene(root, WIDTH, HEIGHT, Color.BLACK);
 
-    private boolean levelUpMessageDisplayed = false;
 
     private boolean levelUpShown = false;
 
@@ -138,13 +132,7 @@ public class SpaceShooter extends Application {
                     obj.render(gc);
                 }
 
-                Iterator<GameObject> iterator = gameObjects.iterator();
-                while (iterator.hasNext()) {
-                    GameObject obj = iterator.next();
-                    if (obj.isDead()) {
-                        iterator.remove();
-                    }
-                }
+                gameObjects.removeIf(GameObject::isDead);
             }
 
 
@@ -179,8 +167,7 @@ public class SpaceShooter extends Application {
         if (!bossExists && score % 200 == 0 && score > 0) {
             BossEnemy boss = new BossEnemy(x, -50);
             gameObjects.add(boss);
-            showTempMessage("A boss is ahead, watch out!", 75, HEIGHT / 2 - 100, 5);
-            bossExists = true;
+            showTempMessage("A boss is ahead, watch out!", 75, (double) HEIGHT / 2 - 100, 5);
         }
         else {
             Enemy enemy = new Enemy(x, -40);
@@ -238,7 +225,7 @@ public class SpaceShooter extends Application {
         }
 
         if (score % 100 == 0 && score > 0 && !levelUpShown) {
-            showTempMessage("Level Up!", 110, HEIGHT / 2, 2);
+            showTempMessage("Level Up!", 110, (double) HEIGHT / 2, 2);
             levelUpShown = true;
         } else if (score % 100 != 0) {
             levelUpShown = false;
@@ -259,12 +246,12 @@ public class SpaceShooter extends Application {
         for (Enemy enemy : enemies) {
             if (enemy.getY() + enemy.getHeight() / 2 >= HEIGHT) {
                 enemy.setDead(true);
-                enemy.SPEED = enemy.SPEED + 0.4;
+                Enemy.SPEED = Enemy.SPEED + 0.4;
                 numLives--;
                 score -= 10;
                 lifeLabel.setText("Lives: " + numLives);
                 if (numLives < 0) {
-                    enemy.SPEED = 2;
+                    Enemy.SPEED = 2;
                     resetGame();
                 }
             }
@@ -283,7 +270,7 @@ public class SpaceShooter extends Application {
         lostMessage.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         lostMessage.setFill(Color.RED);
         lostMessage.setX((WIDTH - lostMessage.getLayoutBounds().getWidth()) / 2);
-        lostMessage.setY(HEIGHT / 2);
+        lostMessage.setY((double) HEIGHT / 2);
         root.getChildren().add(lostMessage);
 
         PauseTransition pause = new PauseTransition(Duration.seconds(2));
@@ -341,13 +328,13 @@ public class SpaceShooter extends Application {
     private void spawnPowerUp() {
         Random random = new Random();
         int x = random.nextInt(WIDTH - PowerUp.WIDTH) + PowerUp.WIDTH / 2;
-        PowerUp powerUp = new PowerUp(x, -PowerUp.HEIGHT / 2);
+        PowerUp powerUp = new PowerUp(x, (double) -PowerUp.HEIGHT / 2);
         gameObjects.add(powerUp);
     }
 
     private void spawnBossEnemy() {
         if (gameObjects.stream().noneMatch(obj -> obj instanceof BossEnemy)) {
-            BossEnemy bossEnemy = new BossEnemy(WIDTH / 2, -40);
+            BossEnemy bossEnemy = new BossEnemy((double) WIDTH / 2, -40);
             gameObjects.add(bossEnemy);
         }
     }
@@ -360,12 +347,10 @@ public class SpaceShooter extends Application {
             lostMessage.setFont(Font.font("Arial", FontWeight.BOLD, 12));
             lostMessage.setFill(Color.RED);
             lostMessage.setX((WIDTH - lostMessage.getLayoutBounds().getWidth()) / 2);
-            lostMessage.setY(HEIGHT / 2 - 100);
+            lostMessage.setY((double) HEIGHT / 2 - 100);
             root.getChildren().add(lostMessage);
             PauseTransition pause = new PauseTransition(Duration.seconds(2));
-            pause.setOnFinished(event -> {
-                root.getChildren().remove(lostMessage);
-            });
+            pause.setOnFinished(event -> root.getChildren().remove(lostMessage));
             pause.play();
         }
 
@@ -421,10 +406,11 @@ public class SpaceShooter extends Application {
         Alert instructionsAlert = new Alert(AlertType.INFORMATION);
         instructionsAlert.setTitle("Instructions");
         instructionsAlert.setHeaderText("Space Shooter Instructions");
-        instructionsAlert.setContentText("Use the A, W, S, and D keys or the arrow keys to move your spaceship.\n" +
-                "Press SPACE to shoot bullets and destroy the enemies.\n" +
-                "If an enemy reaches the bottom of the screen, you lose a life.\n" +
-                "The game resets if you lose all lives.");
+        instructionsAlert.setContentText("""
+                Use the A, W, S, and D keys or the arrow keys to move your spaceship.
+                Press SPACE to shoot bullets and destroy the enemies.
+                If an enemy reaches the bottom of the screen, you lose a life.
+                The game resets if you lose all lives.""");
         instructionsAlert.showAndWait();
     }
 
